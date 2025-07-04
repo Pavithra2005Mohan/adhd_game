@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ADHD Go/No-Go Game</title>
+  <style>
+    body {
+      background: linear-gradient(to right, #a8edea, #fed6e3);
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 10px;
+      overflow: hidden;
+    }
+    h1 { color: #333; text-align: center; }
+    #scoreboard {
+      background: #fff3cd;
+      padding: 10px 20px;
+      border-radius: 10px;
+      box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+      margin-bottom: 20px;
+      text-align: center;
+      font-size: 1.2em;
+    }
+    #gameArea {
+      width: 500px; height: 500px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .stimulus {
+      width: 500px; height: 500px;
+      animation: bounceIn 0.3s;
+    }
+    .green { background: #28a745; border-radius: 50%; }
+    .red { background: #dc3545; border-radius: 10px; }
+    @keyframes bounceIn {
+      from { transform: scale(0.5); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .flash {
+      animation: flash 0.2s;
+    }
+    @keyframes flash {
+      from { opacity: 1; }
+      50% { opacity: 0.3; }
+      to { opacity: 1; }
+    }
+    button {
+      padding: 15px 30px;
+      font-size: 18px;
+      background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+      color: #333; font-weight: bold;
+      border: none; border-radius: 12px;
+      cursor: pointer; margin: 5px;
+      box-shadow: 3px 3px 7px rgba(0,0,0,0.3);
+      transition: transform 0.2s, background 0.3s;
+    }
+    button:hover {
+      transform: scale(1.1);
+      background: linear-gradient(135deg, #fad0c4 0%, #ff9a9e 100%);
+    }
+    #popup, #playerInfoPopup, #rulesPopup {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+      padding: 40px;
+      border: 4px solid #ff6f61;
+      border-radius: 25px;
+      box-shadow: 5px 5px 20px rgba(0,0,0,0.4);
+      z-index: 1000;
+      display: none;
+      text-align: center;
+      max-height: 85vh;
+      overflow-y: auto;
+      min-width: 400px;
+    }
+    #popup .trophy {
+      font-size: 4em;
+      color: gold;
+      animation: trophyPulse 1s infinite alternate;
+    }
+    @keyframes trophyPulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.2); }
+    }
+    #countdown {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 5em;
+      color: #ff6f61;
+      text-shadow: 2px 2px 5px #fff;
+      animation: countdownFlash 1s infinite;
+      display: none;
+    }
+    @keyframes countdownFlash {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+    table {
+      margin: 10px auto;
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid #aaa;
+      padding: 4px 8px;
+      font-size: 14px;
+    }
+    th { background: #ff6f61; color: #fff; }
+    td { background: #ffe0b2; }
+    tr:nth-child(even) td { background: #ffccbc; }
+  </style>
+</head>
+<body>
+<h1>🚀 Go/No-Go ADHD Game</h1>
+<div id="scoreboard">
+  Player: <span id="playerName"></span> (Age: <span id="playerAge"></span>) |
+  Level: <span id="level">1</span> |
+  Score: <span id="score">0</span> |
+  Misses: <span id="misses">0</span> |
+  Wrong Taps: <span id="wrong">0</span> |
+  Time: <span id="timer">30</span>s
+</div>
+<div id="gameArea"></div>
+<button id="startBtn" style="display:none">Start Game</button>
+
+<div id="popup">
+  <div class="trophy">🏆</div>
+  <p id="popupMsg"></p>
+  <div id="leaderboard"></div>
+  <button id="repeatBtn">Repeat Level</button>
+  <button id="restartBtn">Restart Game</button>
+  <button id="nextBtn">Next Level</button>
+  <button id="downloadCSVBtn" style="display:none;">Download CSV</button>
+  <button id="clearLeaderboardBtn" style="display:none;">Clear Leaderboard</button>
+</div>
+
+<div id="playerInfoPopup" style="display:block;">
+  <h3>Enter Player Info</h3>
+  <input type="text" id="inputName" placeholder="Name" /><br><br>
+  <input type="date" id="inputDOB" /><br><br>
+  <select id="inputGender">
+    <option value="">Select Gender</option>
+    <option>Male</option>
+    <option>Female</option>
+    <option>Other</option>
+  </select><br><br>
+  <button id="submitPlayer">Submit</button>
+</div>
+
+<div id="rulesPopup">
+  <h3>Game Rules + Leaderboard</h3>
+  <div id="rulesContent" style="height: 200px; overflow-y: auto;">
+    <p>✅ Tap green circles (Go)</p>
+    <p>❌ Don't tap red squares (No-Go)</p>
+    <p>⏱️ Levels get faster</p>
+    <p>🏆 Score ≥ 5×Level to pass</p>
+    <p>💡 Wrong taps ≤ 2×Level</p>
+    <div id="rulesLeaderboard"></div>
+  </div>
+  <button id="closeRulesBtn">Got it!</button>
+</div>
+
+<div id="countdown"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyDS_qrOD5hcVTZv0KpGccSLqPt2dmEuO0s",
+  authDomain: "gonotgoadhd.firebaseapp.com",
+  databaseURL: "https://gonotgoadhd-default-rtdb.firebaseio.com",
+  projectId: "gonotgoadhd",
+  storageBucket: "gonotgoadhd.appspot.com",
+  messagingSenderId: "463297016422",
+  appId: "1:463297016422:web:1ecfc88ffa4b481f14f3a7",
+  measurementId: "G-CH5X0NT1JC"
+});
+const db = getDatabase(app);
+
+let playerName = "", playerAge = 0, playerGender = "", playerDOBInput = "";
+let level = 1, maxLevel = 5, score = 0, misses = 0, wrongTaps = 0, timer = 30;
+let timerInterval, currentStimulus = null, gameRunning = false;
+
+const startBtn = document.getElementById('startBtn');
+const gameArea = document.getElementById('gameArea');
+const countdownEl = document.getElementById('countdown');
+const popup = document.getElementById('popup');
+const popupMsg = document.getElementById('popupMsg');
+const leaderboardDiv = document.getElementById('leaderboard');
+const rulesLeaderboard = document.getElementById('rulesLeaderboard');
+
+document.getElementById('submitPlayer').onclick = () => {
+  const name = document.getElementById('inputName').value.trim();
+  const dob = document.getElementById('inputDOB').value;
+  const gender = document.getElementById('inputGender').value;
+  if (!name || !dob || !gender) return alert("Enter name, DOB & gender");
+  playerName = name;
+  playerDOBInput = formatDOB(dob);
+  playerAge = calcAge(new Date(dob));
+  playerGender = gender;
+  document.getElementById('playerName').textContent = playerName;
+  document.getElementById('playerAge').textContent = playerAge;
+  document.getElementById('playerInfoPopup').style.display = 'none';
+  document.getElementById('rulesPopup').style.display = 'block';
+  loadLeaderboard(rulesLeaderboard);
+  autoScroll(document.getElementById('rulesContent'));
+  if (playerName.toLowerCase() === 'pavithra mohan' && playerDOBInput === '26-11-2005') {
+    document.getElementById('downloadCSVBtn').style.display = 'inline-block';
+    document.getElementById('clearLeaderboardBtn').style.display = 'inline-block';
+  }
+};
+
+document.getElementById('closeRulesBtn').onclick = () => {
+  document.getElementById('rulesPopup').style.display = 'none';
+  startBtn.style.display = 'inline-block';
+};
+
+startBtn.onclick = () => startGame();
+document.getElementById('repeatBtn').onclick = () => startGame();
+document.getElementById('restartBtn').onclick = () => { level = 1; startGame(); };
+document.getElementById('nextBtn').onclick = () => { level++; startGame(); };
+
+function formatDOB(dobStr) {
+  const date = new Date(dobStr);
+  return `${String(date.getDate()).padStart(2,'0')}-${String(date.getMonth()+1).padStart(2,'0')}-${date.getFullYear()}`;
+}
+function calcAge(dob) {
+  const diff = Date.now() - dob.getTime();
+  const ageDate = new Date(diff);
+  return Math.abs(ageDate.getUTCFullYear() - 1970);
+}
+function autoScroll(el) {
+  let scroll = 0;
+  const loop = () => {
+    scroll++;
+    if (scroll >= el.scrollHeight - el.clientHeight) scroll = 0;
+    el.scrollTop = scroll;
+    setTimeout(loop, 50);
+  };
+  loop();
+}
+function loadLeaderboard(div) {
+  onValue(ref(db,'leaderboard'), snap => {
+    const data = Object.values(snap.val()||{}).sort((a,b)=>b.score - a.score);
+    let html = `<table><tr><th>Rank</th><th>Name</th><th>Age</th><th>Gender</th><th>Level</th><th>Score</th></tr>`;
+    data.forEach((p,i)=>html+=`<tr><td>${i+1}</td><td>${p.name}</td><td>${p.age}</td><td>${p.gender||''}</td><td>${p.level}</td><td>${p.score}</td></tr>`);
+    html+='</table>';
+    div.innerHTML = html;
+  });
+}
+loadLeaderboard(leaderboardDiv);
+
+function startGame() {
+  score = 0; misses = 0; wrongTaps = 0; timer = 30;
+  updateScoreboard();
+  popup.style.display = 'none';
+  startBtn.disabled = true;
+  showCountdown(() => {
+    gameRunning = true;
+    createStimulus();
+    timerInterval = setInterval(() => {
+      timer--;
+      document.getElementById('timer').textContent = timer;
+      if (timer <= 0) endLevel();
+    }, 1000);
+  });
+}
+function showCountdown(cb) {
+  let c = 3;
+  countdownEl.style.display = 'block';
+  countdownEl.textContent = c;
+  const intv = setInterval(()=> {
+    c--;
+    if(c>0) countdownEl.textContent = c;
+    else {
+      clearInterval(intv);
+      countdownEl.style.display = 'none';
+      cb();
+    }
+  },1000);
+}
+function createStimulus() {
+  gameArea.innerHTML = '';
+  const div = document.createElement('div');
+  div.classList.add('stimulus', Math.random()<0.7?'green':'red');
+  div.dataset.type = div.classList.contains('green') ? 'go' : 'nogo';
+  div.addEventListener('click', handleTap);
+  gameArea.appendChild(div);
+  currentStimulus = div;
+  const rt = Math.max(600, 1000 - (level-1)*100);
+  setTimeout(() => {
+    if (gameRunning && currentStimulus === div) {
+      if(div.dataset.type==='go') { misses++; updateScoreboard(); }
+      nextStimulus();
+    }
+  }, rt);
+}
+function handleTap() {
+  if (!currentStimulus) return;
+  currentStimulus.classList.add('flash');
+  if (currentStimulus.dataset.type === 'go') { score++; }
+  else { wrongTaps++; }
+  updateScoreboard();
+  nextStimulus();
+}
+function nextStimulus() {
+  currentStimulus = null;
+  const d = Math.random()*200 + Math.max(300, 700-(level-1)*100);
+  setTimeout(createStimulus, d);
+}
+function updateScoreboard() {
+  document.getElementById('score').textContent = score;
+  document.getElementById('misses').textContent = misses;
+  document.getElementById('wrong').textContent = wrongTaps;
+  document.getElementById('level').textContent = level;
+}
+function endLevel() {
+  gameRunning = false;
+  clearInterval(timerInterval);
+  gameArea.innerHTML = '';
+  const qualified = score >= level*5 && wrongTaps <= level*2;
+  popup.style.display = 'block';
+  popupMsg.textContent = qualified ? `🎉 Level ${level} cleared!` : `😅 Level ${level} failed.`;
+  document.getElementById('nextBtn').style.display = qualified && level < maxLevel ? 'inline-block' : 'none';
+  push(ref(db,'leaderboard'), { name: playerName, age: playerAge, gender: playerGender, level, score });
+}
+</script>
+</body>
+</html>
