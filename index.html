@@ -8,30 +8,20 @@
     body {
       background: linear-gradient(to right, #a8edea, #fed6e3);
       font-family: 'Comic Sans MS', cursive, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 10px;
-      overflow: hidden;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; min-height: 100vh; margin: 0;
+      padding: 10px; overflow: hidden;
     }
     h1 { color: #333; text-align: center; }
     #scoreboard {
       background: #fff3cd;
-      padding: 10px 20px;
-      border-radius: 10px;
+      padding: 10px 20px; border-radius: 10px;
       box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
-      margin-bottom: 20px;
-      text-align: center;
-      font-size: 1.2em;
+      margin-bottom: 20px; text-align: center; font-size: 1.2em;
     }
     #gameArea {
       width: 500px; height: 500px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       margin-bottom: 20px;
     }
     .stimulus {
@@ -44,17 +34,12 @@
       from { transform: scale(0.5); opacity: 0; }
       to { transform: scale(1); opacity: 1; }
     }
-    .flash {
-      animation: flash 0.2s;
-    }
+    .flash { animation: flash 0.2s; }
     @keyframes flash {
-      from { opacity: 1; }
-      50% { opacity: 0.3; }
-      to { opacity: 1; }
+      from { opacity: 1; } 50% { opacity: 0.3; } to { opacity: 1; }
     }
     button {
-      padding: 15px 30px;
-      font-size: 18px;
+      padding: 15px 30px; font-size: 18px;
       background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
       color: #333; font-weight: bold;
       border: none; border-radius: 12px;
@@ -67,12 +52,10 @@
       background: linear-gradient(135deg, #fad0c4 0%, #ff9a9e 100%);
     }
     #popup, #playerInfoPopup, #rulesPopup {
-      position: fixed;
-      top: 50%; left: 50%;
+      position: fixed; top: 50%; left: 50%;
       transform: translate(-50%, -50%);
       background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-      padding: 40px;
-      border: 4px solid #ff6f61;
+      padding: 40px; border: 4px solid #ff6f61;
       border-radius: 25px;
       box-shadow: 5px 5px 20px rgba(0,0,0,0.4);
       z-index: 1000;
@@ -80,11 +63,10 @@
       text-align: center;
       max-height: 85vh;
       overflow-y: auto;
-      min-width: 400px;
+      min-width: 420px;
     }
     #popup .trophy {
-      font-size: 4em;
-      color: gold;
+      font-size: 4em; color: gold;
       animation: trophyPulse 1s infinite alternate;
     }
     @keyframes trophyPulse {
@@ -92,11 +74,9 @@
       to { transform: scale(1.2); }
     }
     #countdown {
-      position: fixed;
-      top: 50%; left: 50%;
+      position: fixed; top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      font-size: 5em;
-      color: #ff6f61;
+      font-size: 5em; color: #ff6f61;
       text-shadow: 2px 2px 5px #fff;
       animation: countdownFlash 1s infinite;
       display: none;
@@ -141,8 +121,6 @@
   <button id="repeatBtn">Repeat Level</button>
   <button id="restartBtn">Restart Game</button>
   <button id="nextBtn">Next Level</button>
-  <button id="downloadCSVBtn" style="display:none;">Download CSV</button>
-  <button id="clearLeaderboardBtn" style="display:none;">Clear Leaderboard</button>
 </div>
 
 <div id="playerInfoPopup" style="display:block;">
@@ -168,6 +146,10 @@
     <p>💡 Wrong taps ≤ 2×Level</p>
     <div id="rulesLeaderboard"></div>
   </div>
+  <div id="adminControls" style="margin-top: 10px; display: none;">
+    <button id="downloadCSVBtn">📥 Download CSV</button>
+    <button id="clearLeaderboardBtn">🗑️ Clear Leaderboard</button>
+  </div>
   <button id="closeRulesBtn">Got it!</button>
 </div>
 
@@ -175,7 +157,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
+import { getDatabase, ref, push, set, onValue, get, remove } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
 
 const app = initializeApp({
   apiKey: "AIzaSyDS_qrOD5hcVTZv0KpGccSLqPt2dmEuO0s",
@@ -184,8 +166,7 @@ const app = initializeApp({
   projectId: "gonotgoadhd",
   storageBucket: "gonotgoadhd.appspot.com",
   messagingSenderId: "463297016422",
-  appId: "1:463297016422:web:1ecfc88ffa4b481f14f3a7",
-  measurementId: "G-CH5X0NT1JC"
+  appId: "1:463297016422:web:1ecfc88ffa4b481f14f3a7"
 });
 const db = getDatabase(app);
 
@@ -200,6 +181,8 @@ const popup = document.getElementById('popup');
 const popupMsg = document.getElementById('popupMsg');
 const leaderboardDiv = document.getElementById('leaderboard');
 const rulesLeaderboard = document.getElementById('rulesLeaderboard');
+const downloadBtn = document.getElementById('downloadCSVBtn');
+const clearBtn = document.getElementById('clearLeaderboardBtn');
 
 document.getElementById('submitPlayer').onclick = () => {
   const name = document.getElementById('inputName').value.trim();
@@ -215,10 +198,8 @@ document.getElementById('submitPlayer').onclick = () => {
   document.getElementById('playerInfoPopup').style.display = 'none';
   document.getElementById('rulesPopup').style.display = 'block';
   loadLeaderboard(rulesLeaderboard);
-  autoScroll(document.getElementById('rulesContent'));
   if (playerName.toLowerCase() === 'pavithra mohan' && playerDOBInput === '26-11-2005') {
-    document.getElementById('downloadCSVBtn').style.display = 'inline-block';
-    document.getElementById('clearLeaderboardBtn').style.display = 'inline-block';
+    document.getElementById('adminControls').style.display = 'block';
   }
 };
 
@@ -232,6 +213,27 @@ document.getElementById('repeatBtn').onclick = () => startGame();
 document.getElementById('restartBtn').onclick = () => { level = 1; startGame(); };
 document.getElementById('nextBtn').onclick = () => { level++; startGame(); };
 
+downloadBtn.onclick = async () => {
+  const snap = await get(ref(db, 'leaderboard'));
+  const data = snap.val() || {};
+  const csv = ["Name,Age,Gender,Level,Score"];
+  Object.values(data).forEach(d => {
+    csv.push(`${d.name},${d.age},${d.gender},${d.level},${d.score}`);
+  });
+  const blob = new Blob([csv.join('\n')], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = "leaderboard.csv";
+  a.click();
+};
+
+clearBtn.onclick = () => {
+  if (confirm("Clear all leaderboard data?")) {
+    set(ref(db, 'leaderboard'), null);
+    alert("Leaderboard cleared!");
+  }
+};
+
 function formatDOB(dobStr) {
   const date = new Date(dobStr);
   return `${String(date.getDate()).padStart(2,'0')}-${String(date.getMonth()+1).padStart(2,'0')}-${date.getFullYear()}`;
@@ -241,27 +243,15 @@ function calcAge(dob) {
   const ageDate = new Date(diff);
   return Math.abs(ageDate.getUTCFullYear() - 1970);
 }
-function autoScroll(el) {
-  let scroll = 0;
-  const loop = () => {
-    scroll++;
-    if (scroll >= el.scrollHeight - el.clientHeight) scroll = 0;
-    el.scrollTop = scroll;
-    setTimeout(loop, 50);
-  };
-  loop();
-}
 function loadLeaderboard(div) {
   onValue(ref(db,'leaderboard'), snap => {
-    const data = Object.values(snap.val()||{}).sort((a,b)=>b.score - a.score);
+    const data = Object.values(snap.val() || {}).sort((a,b)=>b.score - a.score);
     let html = `<table><tr><th>Rank</th><th>Name</th><th>Age</th><th>Gender</th><th>Level</th><th>Score</th></tr>`;
-    data.forEach((p,i)=>html+=`<tr><td>${i+1}</td><td>${p.name}</td><td>${p.age}</td><td>${p.gender||''}</td><td>${p.level}</td><td>${p.score}</td></tr>`);
-    html+='</table>';
+    data.forEach((p,i) => html += `<tr><td>${i+1}</td><td>${p.name}</td><td>${p.age}</td><td>${p.gender||''}</td><td>${p.level}</td><td>${p.score}</td></tr>`);
+    html += '</table>';
     div.innerHTML = html;
   });
 }
-loadLeaderboard(leaderboardDiv);
-
 function startGame() {
   score = 0; misses = 0; wrongTaps = 0; timer = 30;
   updateScoreboard();
@@ -281,28 +271,28 @@ function showCountdown(cb) {
   let c = 3;
   countdownEl.style.display = 'block';
   countdownEl.textContent = c;
-  const intv = setInterval(()=> {
+  const intv = setInterval(() => {
     c--;
-    if(c>0) countdownEl.textContent = c;
+    if (c > 0) countdownEl.textContent = c;
     else {
       clearInterval(intv);
       countdownEl.style.display = 'none';
       cb();
     }
-  },1000);
+  }, 1000);
 }
 function createStimulus() {
   gameArea.innerHTML = '';
   const div = document.createElement('div');
-  div.classList.add('stimulus', Math.random()<0.7?'green':'red');
+  div.classList.add('stimulus', Math.random() < 0.7 ? 'green' : 'red');
   div.dataset.type = div.classList.contains('green') ? 'go' : 'nogo';
   div.addEventListener('click', handleTap);
   gameArea.appendChild(div);
   currentStimulus = div;
-  const rt = Math.max(600, 1000 - (level-1)*100);
+  const rt = Math.max(600, 1000 - (level - 1) * 100);
   setTimeout(() => {
     if (gameRunning && currentStimulus === div) {
-      if(div.dataset.type==='go') { misses++; updateScoreboard(); }
+      if (div.dataset.type === 'go') { misses++; updateScoreboard(); }
       nextStimulus();
     }
   }, rt);
@@ -317,7 +307,7 @@ function handleTap() {
 }
 function nextStimulus() {
   currentStimulus = null;
-  const d = Math.random()*200 + Math.max(300, 700-(level-1)*100);
+  const d = Math.random() * 200 + Math.max(300, 700 - (level - 1) * 100);
   setTimeout(createStimulus, d);
 }
 function updateScoreboard() {
@@ -330,12 +320,13 @@ function endLevel() {
   gameRunning = false;
   clearInterval(timerInterval);
   gameArea.innerHTML = '';
-  const qualified = score >= level*5 && wrongTaps <= level*2;
+  const qualified = score >= level * 5 && wrongTaps <= level * 2;
   popup.style.display = 'block';
   popupMsg.textContent = qualified ? `🎉 Level ${level} cleared!` : `😅 Level ${level} failed.`;
   document.getElementById('nextBtn').style.display = qualified && level < maxLevel ? 'inline-block' : 'none';
-  push(ref(db,'leaderboard'), { name: playerName, age: playerAge, gender: playerGender, level, score });
+  push(ref(db, 'leaderboard'), { name: playerName, age: playerAge, gender: playerGender, level, score });
 }
 </script>
 </body>
 </html>
+
